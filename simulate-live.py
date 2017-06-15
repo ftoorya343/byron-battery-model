@@ -62,14 +62,20 @@ for line in lines:
 	
 
 
-# Pure solar NEM revenue
-for line in lines:
-	line['pure-solar-revenue-all'] = line['All'] * line['Price']
-	line['pure-solar-revenue-optimal'] = line['Optimal'] * line['Price']
+def calculateBatteryRevenue(lines, MWh, priceThreshold, solarCapacityMW):
+	batteryRevenue = 0
+	allRevenue = 0
+	optimalRevenue = 0
 
 
+	# Pure solar NEM revenue
+	for line in lines:
+		line['pure-solar-revenue-all'] = line['All'] * solarCapacityMW * line['Price']
+		line['pure-solar-revenue-optimal'] = line['Optimal'] * solarCapacityMW * line['Price']
+		allRevenue  +=line['pure-solar-revenue-all']
+		optimalRevenue  +=line['pure-solar-revenue-optimal']
+		
 
-def calculateBatteryRevenue(lines, MWh, priceThreshold):
 
 	print "Calculating Battery Revenue"
 	# Luke and Naomi's Awesome Dispatch Strategy
@@ -79,14 +85,16 @@ def calculateBatteryRevenue(lines, MWh, priceThreshold):
 		# If under threshold......
 		if(dataPoint['Price'] < priceThreshold):
 			# Charge the battery, get whatever is left over. 
-			remainingMWh = battery.charge(dataPoint['Optimal'])
+			remainingMWh = battery.charge(dataPoint['Optimal'] * solarCapacityMW)
 			# Sell the remaining energy
 			dataPoint['battery-revenue'] = remainingMWh * dataPoint['Price']
 		else:
-			dataPoint['battery-revenue'] = dataPoint['Price'] * (dataPoint['Optimal'] + battery.discharge())
+			# Sell whatever we can from the battery and the solar system.
+			dataPoint['battery-revenue'] = dataPoint['Price'] * (dataPoint['Optimal'] * solarCapacityMW + battery.discharge())
+		batteryRevenue  +=dataPoint['battery-revenue']
 			
 	print "Finished Calculating Battery Revenue"
-	return battery.getNumCycles()
+	return (battery.getNumCycles(), allRevenue, optimalRevenue, batteryRevenue)
 
 
 
@@ -128,7 +136,7 @@ def generateChartingDict(lines):
 	return source
 
 
-numCycles = calculateBatteryRevenue(lines=lines, MWh=1, priceThreshold=80)
+(numCycles, allRevenue, optimalRevenue, batteryRevenue) = calculateBatteryRevenue(lines=lines, MWh=0.099, priceThreshold=80, solarCapacityMW = 0.099)
 
 source = ColumnDataSource(data=generateChartingDict(lines))
 
@@ -143,7 +151,10 @@ output_file("lines.html")
 
 
 # Set up the plot
-plot = figure(title="Cumulative Revenue - Battery vs Solar ("+str(numCycles)+" Cycles)", x_axis_label='x', y_axis_label='y', width=1200)
+plot = figure(title="Cumulative Revenue Over Time    --    Cycles: "+str("%.2f" %numCycles)+" Solar Revenue: $"+str("%.2f" %allRevenue)+" Optimal Solar Revenue: $"+str("%.2f" %optimalRevenue)+" Battery Revenue: $"+str("%.2f"%batteryRevenue), 
+	x_axis_label='Hour of Year', 
+	y_axis_label='Revenue ($AUD)', 
+	width=1200)
 # plot.line(timePeriod, optimal,legend="Optimal.", line_width=1)
 # plot.line(timePeriod, all,legend="Optimal.", line_width=1)
 plot.line('timePeriod', 'cumulativeSolarRevenueAll',source=source, legend="Cumulative Solar Revenue - All", line_width=1)
@@ -153,9 +164,9 @@ plot.line('timePeriod', 'cumulativeBatteryOptimal',source=source, legend="Cumula
 plot.legend[0].orientation = "horizontal"
 # Set up widgets
 
-batterySizeMWh = Slider(title="Battery Capacity (MWh)", value=1.0, start=0, end=5.0, step=0.1)
-solarSizeMWh = Slider(title="Solar Capacity (MWh)", value=1.0, start=0.0, end=5.0)
-priceThreshold = Slider(title="Price Threshold ($/MWh)", value=80.0, start=80.0, end=300.0)
+batterySizeMWh = Slider(title="Battery Capacity (MWh)", value=0.099, start=0, end=5.0, step=0.1)
+solarSizeMWh = Slider(title="Solar Capacity (MW)", value=0.099, start=0, end=2.0, step=0.001)
+priceThreshold = Slider(title="Battery Dispatch Price Threshold ($/MWh)", value=80.0, start=80.0, end=300.0)
 
 def update_data():
 	# Get the current slider values
@@ -163,9 +174,9 @@ def update_data():
 	batteryCap = batterySizeMWh.value
 	priceThresh = priceThreshold.value
 
-	numCycles = calculateBatteryRevenue(lines=lines, MWh=batteryCap, priceThreshold=priceThresh)
-	generateChartingDict(lines)
+	(numCycles, allRevenue, optimalRevenue, batteryRevenue) = calculateBatteryRevenue(lines=lines, MWh=batteryCap, priceThreshold=priceThresh, solarCapacityMW = solarCap)
 	source.data = generateChartingDict(lines)
+	plot.title.text = "Cumulative Revenue Over Time    --    Cycles: "+str("%.2f" %numCycles)+" Solar Revenue: $"+str("%.2f" %allRevenue)+" Optimal Solar Revenue: $"+str("%.2f" %optimalRevenue)+" Battery Revenue: $"+str("%.2f"%batteryRevenue)
 
 # for w in [batterySizeMWh, solarSizeMWh, priceThreshold]:
 # 	w.on_change('value', update_data)

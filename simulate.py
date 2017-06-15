@@ -34,7 +34,7 @@ class Battery():
 
 
 
-
+solarCapacity = 0.099
 solarFile = open('solar-nem-half-hourly.csv')
 
 # Input data is normalised to kWh/kWp or MWh / MWp (equivalent)
@@ -43,10 +43,10 @@ lines = list(lines)
 
 # Convert types from strings to floats/ ints
 for line in lines:
-	line['All'] = float(line['All'])
-	line['Optimal'] = float(line['Optimal'])
+	line['All'] = float(line['All']) * solarCapacity
+	line['Optimal'] = float(line['Optimal']) * solarCapacity
 	line['Price'] = float(line['Price'])
-	
+
 
 
 # Pure solar NEM revenue
