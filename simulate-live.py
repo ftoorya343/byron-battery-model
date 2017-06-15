@@ -164,7 +164,7 @@ plot.line('timePeriod', 'cumulativeBatteryOptimal',source=source, legend="Cumula
 plot.legend[0].orientation = "horizontal"
 # Set up widgets
 
-batterySizeMWh = Slider(title="Battery Capacity (MWh)", value=0.099, start=0, end=2.0, step=0.1)
+batterySizeMWh = Slider(title="Battery Capacity (MWh)", value=0.099, start=0, end=1.0, step=0.001)
 solarSizeMWh = Slider(title="Solar Capacity (MW)", value=0.099, start=0, end=2.0, step=0.001)
 priceThreshold = Slider(title="Battery Dispatch Price Threshold ($/MWh)", value=80.0, start=80.0, end=300.0)
 
