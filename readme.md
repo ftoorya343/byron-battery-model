@@ -1,11 +1,5 @@
-# H1
-## H2
-### H3
-#### H4
-##### H5
-###### H6
-
-Solar + Battery System Simulation
+# Byron Battery Model
+## Solar & Battery System Simulation
 
 This program simulates the operation of a solar + battery system on the NEM. At the moment, it uses solar data from pvoutput.org (normalised, aggregated) and electricity spot market price data from AEMO.
 
