@@ -2,3 +2,7 @@
 *.pem
 
 Byron Battery Results.xlsx
+
+*.xlsx
+
+~$Byron Battery Results.xlsx

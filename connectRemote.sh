@@ -1,0 +1,1 @@
+ssh -i "batterymodel.pem" ec2-user@ec2-52-65-218-219.ap-southeast-2.compute.amazonaws.com
